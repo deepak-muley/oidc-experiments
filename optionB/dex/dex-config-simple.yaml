@@ -1,0 +1,55 @@
+# Simplified Dex config with local password DB
+# This allows direct username/password login (no device code needed!)
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dex
+  namespace: auth
+data:
+  config.yaml: |
+    issuer: http://dex.auth.svc.cluster.local:5556
+
+    storage:
+      type: kubernetes
+      config:
+        inCluster: true
+
+    web:
+      http: 0.0.0.0:5556
+
+    staticClients:
+    - id: cli
+      name: cli
+      secret: cli-secret
+      redirectURIs:
+      - http://127.0.0.1:5555/callback
+      - http://localhost:5556/device/callback
+      - http://dex.auth.svc.cluster.local:5556/device/callback
+      - /device/callback
+      public: false
+      trustedPeers: []
+
+    enablePasswordDB: true
+    
+    # Local passwords - direct username/password login!
+    # Password for all: "password"
+    staticPasswords:
+    - email: einstein@example.com
+      # bcrypt hash for "password"
+      # Generate with: python3 -c "import bcrypt; print(bcrypt.hashpw(b'password', bcrypt.gensalt()).decode())"
+      hash: $2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+      username: einstein
+      userID: einstein
+    - email: newton@example.com
+      hash: $2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+      username: newton
+      userID: newton
+    - email: galieleo@example.com
+      hash: $2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+      username: galieleo
+      userID: galieleo
+
+    # No LDAP connector - using local passwords instead
+    # This is simpler and allows direct username/password login!
+

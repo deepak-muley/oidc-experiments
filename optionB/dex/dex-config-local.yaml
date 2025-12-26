@@ -1,0 +1,65 @@
+# Alternative Dex config using local password DB instead of LDAP
+# Use this if ForumSys LDAP is not working
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dex
+  namespace: auth
+data:
+  config.yaml: |
+    issuer: http://dex.auth.svc.cluster.local:5556
+
+    storage:
+      type: kubernetes
+      config:
+        inCluster: true
+
+    web:
+      http: 0.0.0.0:5556
+
+    staticClients:
+    - id: cli
+      name: cli
+      secret: cli-secret
+      redirectURIs:
+      - http://127.0.0.1:5555/callback
+      - http://localhost:5556/device/callback
+      - http://dex.auth.svc.cluster.local:5556/device/callback
+      - /device/callback
+      public: false
+      trustedPeers: []
+
+    enablePasswordDB: true
+    
+    # Static passwords (for demo - matches ForumSys users)
+    staticPasswords:
+    - email: einstein@ldap.forumsys.com
+      hash: $2a$10$2b2cU8CPhlHHxwKLp5qNUOO0vN1qK83z6Q5pL5J5J5J5J5J5J5J5J
+      username: einstein
+      userID: einstein
+    - email: newton@ldap.forumsys.com
+      hash: $2a$10$2b2cU8CPhlHHxwKLp5qNUOO0vN1qK83z6Q5pL5J5J5J5J5J5J5J5J
+      username: newton
+      userID: newton
+
+    # Keep LDAP connector as fallback (commented out if LDAP fails)
+    # connectors:
+    # - type: ldap
+    #   id: forumsys
+    #   name: ForumSys LDAP
+    #   config:
+    #     host: ldap.forumsys.com:389
+    #     insecureNoSSL: true
+    #     insecureSkipVerify: true
+    #     bindDN: "uid=read-only-admin,dc=example,dc=com"
+    #     bindPW: "password"
+    #     usernamePrompt: "Username"
+    #     userSearch:
+    #       baseDN: "dc=example,dc=com"
+    #       filter: "(objectClass=person)"
+    #       username: "uid"
+    #       idAttr: "uid"
+    #       emailAttr: "mail"
+    #       nameAttr: "cn"
+

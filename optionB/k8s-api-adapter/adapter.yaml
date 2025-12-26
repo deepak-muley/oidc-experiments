@@ -1,0 +1,64 @@
+# Kubernetes API Adapter for podinfo
+# This adapter makes podinfo look like Kubernetes API to kube-oidc-proxy
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-api-adapter
+  namespace: podinfo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: k8s-api-adapter
+  template:
+    metadata:
+      labels:
+        app: k8s-api-adapter
+    spec:
+      containers:
+      - name: adapter
+        # Using a simple nginx with lua or a custom Go/Python service
+        # This is a placeholder - you'd need to implement the actual adapter logic
+        image: nginx:alpine
+        ports:
+        - containerPort: 8443
+        volumeMounts:
+        - name: adapter-config
+          mountPath: /etc/nginx
+      volumes:
+      - name: adapter-config
+        configMap:
+          name: adapter-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: k8s-api-adapter
+  namespace: podinfo
+spec:
+  selector:
+    app: k8s-api-adapter
+  ports:
+  - port: 443
+    targetPort: 8443
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: adapter-config
+  namespace: podinfo
+data:
+  # This would need actual adapter logic
+  # For now, this is a template showing the concept
+  adapter.sh: |
+    #!/bin/sh
+    # Adapter script that:
+    # 1. Receives K8s API requests from kube-oidc-proxy
+    # 2. Converts to podinfo requests
+    # 3. Converts responses to K8s API format
+    
+    # Example: GET /api/v1/namespaces/podinfo/pods
+    # Converts to: GET http://podinfo:9898/
+    # Returns: K8s API PodList format
+

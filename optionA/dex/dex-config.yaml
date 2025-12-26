@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dex
+  namespace: auth
+data:
+  config.yaml: |
+    issuer: http://dex.localtest.me
+    storage:
+      type: kubernetes
+      config:
+        inCluster: true
+    web:
+      http: 0.0.0.0:5556
+
+    staticClients:
+    - id: oauth2-proxy
+      name: oauth2-proxy
+      secret: oauth2-proxy-secret
+      redirectURIs:
+      - "http://podinfo.localtest.me/oauth2/callback"
+
+    connectors:
+    - type: ldap
+      id: forumsys
+      name: "ForumSys LDAP"
+      config:
+        host: ldap.forumsys.com:389
+        insecureNoSSL: true
+        insecureSkipVerify: true
+
+        # Bind user (read-only)
+        bindDN: "uid=read-only-admin,dc=example,dc=com"
+        bindPW: "password"
+
+        usernamePrompt: "Username"
+
+        userSearch:
+          baseDN: "dc=example,dc=com"
+          filter: "(objectClass=person)"
+          username: "uid"
+          idAttr: "uid"
+          emailAttr: "mail"
+          nameAttr: "cn"
+

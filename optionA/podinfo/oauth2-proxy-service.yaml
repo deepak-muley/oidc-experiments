@@ -1,0 +1,10 @@
+# ExternalName service to reference oauth2-proxy from podinfo namespace
+apiVersion: v1
+kind: Service
+metadata:
+  name: oauth2-proxy
+  namespace: podinfo
+spec:
+  type: ExternalName
+  externalName: oauth2-proxy.oauth2.svc.cluster.local
+

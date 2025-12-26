@@ -1,0 +1,54 @@
+# oauth2-proxy for Option B - Token validation proxy
+# This actually validates tokens and protects podinfo
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oauth2-proxy
+  namespace: oidc-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: oauth2-proxy}
+  template:
+    metadata:
+      labels: {app: oauth2-proxy}
+    spec:
+      containers:
+      - name: oauth2-proxy
+        image: quay.io/oauth2-proxy/oauth2-proxy:v7.7.1
+        args:
+        - --provider=oidc
+        - --oidc-issuer-url=http://dex.auth.svc.cluster.local:5556
+        - --login-url=http://localhost:5556/auth
+        - --redeem-url=http://localhost:5556/token
+        - --oidc-jwks-url=http://localhost:5556/keys
+        - --client-id=cli
+        - --client-secret=cli-secret
+        - --cookie-secret=${COOKIE_SECRET}
+        # Note: cookie-secret should be 16, 24, or 32 bytes (or base64 encoded)
+        - --redirect-url=http://localhost:4180/oauth2/callback
+        - --cookie-secure=false
+        - --email-domain=*
+        - --http-address=0.0.0.0:4180
+        - --upstream=http://podinfo.podinfo.svc.cluster.local:9898
+        - --skip-auth-regex=^/health
+        - --pass-authorization-header=true
+        - --set-xauthrequest=true
+        # Token validation mode (not browser login)
+        - --skip-provider-button=true
+        - --pass-access-token=true
+        ports:
+        - containerPort: 4180
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oauth2-proxy
+  namespace: oidc-proxy
+spec:
+  selector: {app: oauth2-proxy}
+  ports:
+  - port: 80
+    targetPort: 4180
+

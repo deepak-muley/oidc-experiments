@@ -1,0 +1,51 @@
+# oauth2-proxy Configuration for Gateway API
+# Updated to use hostname-based URLs
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oauth2-proxy
+  namespace: oidc-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: oauth2-proxy}
+  template:
+    metadata:
+      labels: {app: oauth2-proxy}
+    spec:
+      containers:
+      - name: oauth2-proxy
+        image: quay.io/oauth2-proxy/oauth2-proxy:v7.7.1
+        args:
+        - --provider=oidc
+        - --oidc-issuer-url=http://dex.local
+        - --client-id=cli
+        - --client-secret=cli-secret
+        - --cookie-secret=cdecbe151f6c856f575fce952fd43b3e
+        - --redirect-url=http://podinfo.local:8080/oauth2/callback
+        - --skip-oidc-discovery=true
+        - --login-url=http://dex.local:8080/auth
+        - --redeem-url=http://dex.auth.svc.cluster.local:5556/token
+        - --oidc-jwks-url=http://dex.auth.svc.cluster.local:5556/keys
+        - --cookie-secure=false
+        - --email-domain=*
+        - --http-address=0.0.0.0:4180
+        - --upstream=http://podinfo.podinfo.svc.cluster.local:9898
+        - --skip-auth-regex=^/health
+        - --pass-authorization-header=true
+        - --set-xauthrequest=true
+        ports:
+        - containerPort: 4180
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oauth2-proxy
+  namespace: oidc-proxy
+spec:
+  selector: {app: oauth2-proxy}
+  ports:
+  - port: 80
+    targetPort: 4180
+
